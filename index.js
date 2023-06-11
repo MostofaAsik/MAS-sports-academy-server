@@ -157,10 +157,11 @@ async function run() {
             res.send(result)
         })
 
-        //get for specific email
-        app.get('/class', async (req, res) => {
-            const email = req.query.email;
 
+
+        // get for specific email
+        app.get('/class/:email', async (req, res) => {
+            const email = req.params.email;
             if (!email) {
                 res.send([])
             }
@@ -171,6 +172,8 @@ async function run() {
         })
 
 
+
+        //>>>>>admin>>>>
         //approved
         app.patch("/classes/approved/:id", async (req, res) => {
             const id = req.params.id;
