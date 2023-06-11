@@ -48,6 +48,9 @@ async function run() {
 
         const usersCollection = client.db('sportsDb').collection('users')
 
+        const classCollection = client.db('sportsDb').collection('classes')
+
+
 
 
         //JWT
@@ -58,9 +61,22 @@ async function run() {
         })
 
 
+
         //<<<<< users related api >>>>>>>>>
+
+        const verifyAdmin = async (req, res, next) => {
+            const email = req.decoded.email;
+            const query = { email: email }
+            const user = await usersCollection.findOne(query)
+            if (user?.role !== 'admin') {
+                return res.status(403).send({ error: true, message: 'forbidden access' })
+            }
+            next()
+        }
+
+
         //user get api
-        app.get('/users', async (req, res) => {
+        app.get('/users', verifyJWT, verifyAdmin, async (req, res) => {
             const result = await usersCollection.find().toArray()
             res.send(result)
         })
@@ -129,7 +145,17 @@ async function run() {
             res.send(result)
         })
 
+        //create classCollecttion
+        app.post('/class', async (req, res) => {
+            const newItem = req.body;
+            const result = await classCollection.insertOne(newItem)
+            res.send(result)
+        })
 
+        app.get('/class', async (req, res) => {
+            const result = await classCollection.find().toArray()
+            res.send(result)
+        })
 
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
