@@ -43,12 +43,13 @@ const client = new MongoClient(uri, {
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
-        await client.connect();
+        // await client.connect();
 
 
         const usersCollection = client.db('sportsDb').collection('users')
 
         const classCollection = client.db('sportsDb').collection('classes')
+        const cartCollection = client.db('sportsDb').collection('carts')
 
 
 
@@ -80,6 +81,42 @@ async function run() {
             const result = await usersCollection.find().toArray()
             res.send(result)
         })
+
+
+        //get only instructor TODO
+        app.get('/users/instructor', async (req, res) => {
+            const query = { role: 'instructor' }
+            const result = await usersCollection.find(query).toArray()
+            res.send(result)
+        })
+
+        ////cart collection
+        app.post("/carts", async (req, res) => {
+            const item = req.body;
+            const result = await cartCollection.insertOne(item);
+            res.send(result);
+        });
+
+        app.get("/carts/payment-pending", verifyJWT, async (req, res) => {
+            const email = req.query.email;
+            // console.log(email, "payment email");
+
+            if (!email) {
+                res.send([]);
+            }
+
+            const decodedEmail = req.decoded.email;
+            if (email !== decodedEmail) {
+                return res
+                    .status(403)
+                    .send({ error: true, message: "forbidden access" });
+            }
+
+            const query = { email: email, info: "payment pending" };
+            const result = await cartCollection.find(query).toArray();
+            res.send(result);
+        });
+
         //user created api
         app.post('/users', async (req, res) => {
             const user = req.body;
@@ -158,6 +195,19 @@ async function run() {
         })
 
 
+        //get approved  TODO
+        app.get('/class/approved', async (req, res) => {
+            const query = { status: 'approved' }
+            const result = await classCollection.find(query).toArray()
+            res.send(result)
+        })
+
+        // app.get('/class/:id', async (req, res) => {
+        //     const id = req.params.id
+        //     const query = { _id: new ObjectId(id) }
+        //     const result = await classCollection.findOne(query)
+        //     res.send(result)
+        // })
 
         // get for specific email
         app.get('/class/:email', async (req, res) => {
